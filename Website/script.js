@@ -1,4 +1,5 @@
-const input_text = document.getElementById("inputtest")
+const ping_input = document.getElementById("pinginput")
+const connect_input = document.getElementById("connectinput")
 const status_div = document.getElementById('status')
 
 status_div.innerText = "haha"
@@ -14,32 +15,39 @@ function setStatus(text, colorstr="normal") {
     status_div.innerText = text
 }
 
-async function sendString() {
-    console.log("sending")
-    try {
-        const response = await fetch("http://127.0.0.1:5000/send_string", {
-            method: "POST",
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({string: "haiiiii"})
-        })
-    } catch (error) {
-        console.log("Error lol ", error)
-    }
-}
-
 async function sendPing(){
-    console.log("http://" + input_text.value + ":5000/ping")
     try{
         setStatus("sending ping")
-        const response = await fetch("http://" + input_text.value + ":5000/ping", {method: "POST"})
+        const response = await fetch("http://" + ping_input.value + ":5000/ping", {method: "POST"})
 
         if (response.status == 200) {
-            setStatus("Success :D", "success")
+            setStatus("Ping was successful", "success")
         }
     } catch (error) {
         console.log(error)
         setStatus(error, "error")
     }
+}
+
+async function attemptconnection() {
+    try{
+        setStatus("sending connection attempt")
+        const response = await fetch("http://" + ping_input.value + ":5000/connect", {
+            method: "POST",
+            headers: {'Content-Type': "application/json"},
+            body: JSON.stringify({ deviceId : 1337 })
+        })
+
+        if (response.status == 200) {
+            setStatus("Connection successful", "success")
+        } else (
+            setStatus(response.status, "error")
+        )
+    } catch(error) {
+        setStatus(error, "error")
+    }
+}
+
+async function screenshot() {
+    setStatus("attempting IMG")
 }

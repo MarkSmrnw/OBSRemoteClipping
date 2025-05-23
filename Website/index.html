@@ -20,7 +20,8 @@
     </style>
 </head>
 
-<body>    <div style="font-size: 64px; justify-content: center; display: flex; font-weight: 700; margin-top: 50px; text-align: center;">
+<body>    
+    <div style="font-size: 64px; justify-content: center; display: flex; font-weight: 700; margin-top: 50px; text-align: center;">
         Clipping Home
     </div>
 
@@ -28,11 +29,22 @@
         <div class="row justify-content-center">
             <div class="col-md-6 text-center">
                 <button type="button" class="btn btn-primary btn-lg" onclick="sendPing()">Send Ping</button>
-                <input id="inputtest">
-            </div> <br><br>
+                <input id="pinginput">
+            </div> 
+
+            <div class="col-md-6 text-center">
+                <button type="button" class="btn btn-primary btn-lg" onclick="attemptconnection()">Connect</button>
+                <input id="connectinput">
+            </div>
             <div style="background-color: gray;" id="status">
                 STATUS
             </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="imagecontainer" style="aspect-ratio: 16/9; background-color: aqua;">
+            
         </div>
     </div>
     
