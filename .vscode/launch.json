@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch main.py",
+            "name": "Launch debug.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "pyserver/main.py",
+            "program": "pyserver/debug.py",
             "console": "integratedTerminal"
         }
     ]

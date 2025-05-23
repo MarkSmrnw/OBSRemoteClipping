@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HÄ</title>
+    <title>CINMA</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,44 +12,84 @@
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS-->
+    <link rel="stylesheet" href="style.css">
     
     <style>
         body {
             font-family: 'Work Sans', sans-serif;
         }
+
+        .txt{
+            border-radius: 10px;
+            height: 64%;
+            margin-top: auto;
+            margin-bottom: auto;   
+        }
+        .txt:focus{
+            outline: none;
+            border: 2px dotted #6a85a1;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
 
-<body>    
+<body style="background-color: rgb(14, 14, 14);">    
+    <div style="background-color: rgb(14, 14, 14); text-align: center;" id="status"></div>
     <div style="font-size: 64px; justify-content: center; display: flex; font-weight: 700; margin-top: 50px; text-align: center;">
-        Clipping Home
+        <span style="color: white;" id="greeting"></span><br><br>
     </div>
 
     <div class="container mt-4">
         <div class="row justify-content-center">
-            <div class="col-md-6 text-center">
-                <button type="button" class="btn btn-primary btn-lg" onclick="sendPing()">Send Ping</button>
-                <input id="pinginput">
+            <div class="col-md-12 text-center">
+                <h6 style="color: white;">Ping</h6>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="sendPing()">SEND</button>
+                <input class="txt" id="pinginput">
             </div> 
 
-            <div class="col-md-6 text-center">
-                <button type="button" class="btn btn-primary btn-lg" onclick="attemptconnection()">Connect</button>
-                <input id="connectinput">
-            </div>
-            <div style="background-color: gray;" id="status">
-                STATUS
+            <div class="col-md-12 text-center" style="margin-top: 2%;">
+                <h6 style="color: white;">Connect Device</h6>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="attemptconnection()">SEND</button>
+                <input class="txt" id="connectinput">
             </div>
         </div>
-    </div>
-
-    <div class="container">
-        <div class="imagecontainer" style="aspect-ratio: 16/9; background-color: aqua;">
-            
+    </div>    
+    <div class="container" id="imgwrapper">
+        <div class="row justify-content-center">
+            <!--
+            <div class="upperimgdiv col-md-5">
+                <span class="computerid">[COMPUTERID]</span>
+                <div class="disconnectbutton">DISCONNECT</div>
+                <div class="pccover"></div>
+                <img class="innerimg" id="pcimg' + id + '" src="lol.jpg">
+            </div>
+            -->
         </div>
     </div>
     
     <!-- Bootstrap JavaScript Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
+
+    <script>
+        // Function to update the greeting message based on the time of day
+        function updateGreeting() {
+            let greeting;
+            let greetings = [
+                "(•‿•)", "(◑‿◐)", "(づ ◕‿◕ )づ", "(¬‿¬)", 
+                "(✿◠‿◠)", "(✧ω✧)", "(✪ω✪)", "(｡♥‿♥｡)", 
+                "(≧◡≦)", "(╯°□°）╯︵ ┻━┻", "ʕ•ᴥ•ʔ", "ʕ •́؈•̀ ₎", 
+                "ʕ •́ ᴥ •̀ ₎", "ʕ •́ ͜ʖ •̀ ₎", "ʕ •́ ͜ʖ •̀ ₎", "(⌐■_■)",
+                "(ツ)", "ᕙ(⇀‸↼‶)ᕗ", "(,,◕　⋏　◕,,)", "(='X'=)",
+                "\(o_o)/", "(^_^)b"];
+
+            
+            document.getElementById("greeting").innerText = greetings[Math.floor(Math.random() * greetings.length)];
+        }
+
+        updateGreeting();
+    </script>
 </body>
 </html>

@@ -1,0 +1,8 @@
+obswebsocket
+flask
+flask_cors
+mss
+pillow
+io
+json
+os
