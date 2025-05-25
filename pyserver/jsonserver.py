@@ -15,15 +15,12 @@ CORS(flask_app)
 def readjson():
     
     with open(path, "r") as f:
-
         data = json.load(f)
-        print(data)
 
     return jsonify(data)
 
 @flask_app.route('/write', methods=['POST'])
 def writejson():
-    print("json write called")
     if request.is_json:
         data = request.get_json()
         with open(path, "w") as f:

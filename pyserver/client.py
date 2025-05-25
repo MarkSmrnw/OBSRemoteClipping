@@ -7,7 +7,7 @@ import mss
 from PIL import Image
 
 import io
-import json
+import time
 
 flask_app = Flask(__name__)
 CORS(flask_app)
@@ -37,15 +37,6 @@ def take_ss() -> bytes:
 def ping():
     return jsonify({"message":"Ping recieved."}), 200
 
-@flask_app.route('/send_string', methods=['POST'])
-def recieve_string():
-    if request.is_json:
-        data = request.get_json()
-        print(data)
-
-        return jsonify({"message":"Python request processed."}), 200
-    return jsonify({"error": "Request must be JSON"}), 400
-
 @flask_app.route('/connect', methods=['POST'])
 def connection():
     if request.is_json:
@@ -68,8 +59,8 @@ def connection():
             if (HASCONNECTION == False):
                 global WS
 
-                ws = obsws("localhost", 4455)
-                ws.connect()
+                WS = obsws("localhost", 4455)
+                WS.connect()
 
                 HASCONNECTION = True
 
@@ -78,6 +69,26 @@ def connection():
         
         return jsonify({"error":"Proper content not delivered"}), 400
     return jsonify({"error":"Request is not JSON."}), 400
+
+@flask_app.route('/disconnect')
+def disconnect():
+    
+    global WS
+    global SERVERIP
+    global DEVICEID
+    global HASCONNECTION
+
+    if (HASCONNECTION and WS):
+        WS.disconnect()
+
+        SERVERIP = "0.0.0.0"
+        DEVICEID = 0
+        HASCONNECTION = False
+        WS = None
+
+        return jsonify({'message': "Client disconnected."}), 200
+    return jsonify({'error': "Client has no connection."}), 400
+
 
 @flask_app.route('/screenshot')
 def sendscreenshot():
@@ -90,11 +101,6 @@ def sendscreenshot():
         )
     except Exception as e:
         return str(e), 500
-
-@flask_app.route('/json/read')
-def readjson():
-     with open("connections.json", "r") as f:
-         json
 
 def run():
     flask_app.run(debug=False, host="0.0.0.0", port=5000)
