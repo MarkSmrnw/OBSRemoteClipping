@@ -1,8 +1,5 @@
-obswebsocket
+obs-websocket-py
 flask
 flask_cors
 mss
 pillow
-io
-json
-os
