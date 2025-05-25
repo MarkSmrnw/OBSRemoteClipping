@@ -576,11 +576,21 @@ async function sendCli(text) {
             . {
             background-color: transparent !important;
             }
-            
-            .innerimg {
+              .innerimg {
             background-color: transparent !important;
             border: 2px solid #0f0 !important;
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.5) !important;
+            }
+            
+            .innerimg[style*="border: 5px solid red"] {
+            border: 5px solid #ff0000 !important;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.8) !important;
+            animation: recordingPulse 1s infinite alternate;
+            }
+            
+            @keyframes recordingPulse {
+            0% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.8); }
+            100% { box-shadow: 0 0 20px rgba(255, 0, 0, 1); }
             }
             
               img:not(.innerimg) {
