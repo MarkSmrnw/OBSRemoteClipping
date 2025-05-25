@@ -37,15 +37,13 @@
     width: 50%;
     border-radius: 10px;
     text-align: center;
-    
-    /* Position the button on top of other content */
+
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 2;
-    
-    /* Make sure it's visible */
+
     opacity: 0;
     transition: opacity 0.3s ease;
 }

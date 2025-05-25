@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CINMA</title>
+    <title>OBSRemoteClipping</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -58,7 +58,7 @@
         .navmain{
             margin-top: 20px;
             margin-bottom: 20px;
-            background-color: rgb(10, 10, 10);
+            background-color: rgb(14, 14, 14);
         }
 
         #clisend{
@@ -85,15 +85,64 @@
             vertical-align: top;
         }
 
+        .clippingbuttons{
+            width: 150px;
+            border-radius: 10px;
+            margin-right: 1%;
+            margin-left: 1%;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: white;
+            background-color: rgb(10, 10, 10);
+            cursor: pointer;
+            border-style: none;
+            box-shadow: 1px 1px white;
+        }
+
+        .clippingbuttons:disabled{
+            cursor: not-allowed;
+            color: gray;
+            background-color:rgb(0, 0, 0);
+        }
+
+        .clippingbuttons:focus{
+            outline: none;
+        }
+
+        .clippingbuttons:active:enabled{
+            box-shadow: 4px 4px white;
+            background-color: rgb(11, 11, 11);
+        }
+
+        .screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: transparent;
+            border: 3px solid red;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+        }
+
+        .screen-overlay.active {
+            display: block;
+        }
+
     </style>
 </head>
 
 <body style="background-color: rgb(14, 14, 14);">    
+    <div class="screen-overlay" id="screenOverlay"></div>
+    
     <div style="background-color: rgb(14, 14, 14); text-align: center;" id="status"></div>
 
     <!--NAV-->
     <div class="row justify-content-center navmain">
-        <div class="col-md-1 navbox" onclick="showsettings()">Settings</div>
+        <div class="col-md-1 navbox" style="cursor: not-allowed; color: gray;
+            background-color:rgb(0, 0, 0);">Settings</div>
         <div class="col-md-1 navbox" onclick="showoverview()">Overview</div>
         <div class="col-md-1 navbox" onclick="showcommands()">Commands</div>
     </div>
@@ -103,8 +152,8 @@
     </div>
 
     <div style="font-size: 64px; justify-content: center; display: flex; font-weight: 700; margin-top: 50px; text-align: center;" id="firsttimegreeting">
-        <span style="color: white;">Hi! Welcome to ObsRemoteClipping</span><br><br>
-    </div>    
+        <span style="color: white;">Hi! Welcome to ObsRemoteClipping</div> </span><br><br>
+    </div>
 
     <!-- CLI -->
 
@@ -113,9 +162,9 @@
         <div class="row justify-content-center">
             <h6 style="color: white;">CLI input</h6>
             <div class="col-md-12 text-center" style="display: flex;">
-                <input class="txt" id="txtinput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" 
+                <input class="txt" id="txtinput" autocomplete="off" </div>autocorrect="off" autocapitalize="off" spellcheck="false" 
                     onkeydown="if(event.key==='Enter'){ event.preventDefault(); document.getElementById('clisend').click(); }">
-                <button type="button" id="clisend" onclick="sendCli()" style="cursor:pointer;"><img src="symbols/send.svg"></button>
+                <button type="button" id="clisend" oncli</div>ck="sendCli()" style="cursor:pointer;"><img src="symbols/send.svg"></button>
             </div>
             <div class="col-md-12 text-center" style="display: flex; margin-top: 1%;">
                 <textarea class="txt" id="cliresponse" readonly style="height:200px; resize: none; font-size: 12pt;"></textarea>
@@ -127,7 +176,11 @@
 
     <!-- Screen Overview -->
     <div class="container" id="overviewwrapper">
+        
         <!--
+        <div class="row justify-content-center">
+        <button class="clippingbuttons" id="startreplaybutton" onclick="togglereplay()">Start replaybuffer</button>
+        <button class="clippingbuttons" id="savereplaybutton" onclick="savereplay()">Save clip</button></div>
         <div class="row justify-content-center">
             <div class="upperimgdiv col-md-5">
                 <span class="computerid">[COMPUTERID]</span>
@@ -137,16 +190,19 @@
             </div>
         </div>
         -->
+
     </div>
 
     <!-- Settings Modal -->
     <div class="container mt-4" id="settingswrapper">
         <!--
         <div class="row justify-content-center">
-            <h6 style="color: white;">Settings (TBDeveloped)</h6>
-            
+            <h6 style="color: white;">Settings</h6>
+            <br><br><br>
         </div>
-        -->
+        <div class="row justify-content-center">
+            <h6 style="color: white;">TO BE ADDED!</h6>
+        </div>-->
     </div>
 
 
@@ -163,10 +219,8 @@
     <script src="script.js"></script>
 
     <script>
-
         // \(o_o)/ for overview
         // ᕙ(⇀‸↼‶)ᕗ for settings
-
     </script>
 </body>
 </html>

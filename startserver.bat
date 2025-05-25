@@ -1,0 +1,1 @@
+start %CD%/pyserver/jsonserver.py

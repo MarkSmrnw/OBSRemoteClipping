@@ -6,5 +6,11 @@ Authors:
 
 
 # HOW TO RUN:
-To debug this or to run both client and server on your own pc, you want to run debug.py.
-That file starts 2 threads, one handling JSON and the other handling the client logic.
+
+For Clients: Run the startclient.bat file.
+This will start the client.py file.
+
+For Servers. Run the startserver.bat file.
+This will start the jsonserver.py
+
+The server is there for saving and handling json to save what client is connected.

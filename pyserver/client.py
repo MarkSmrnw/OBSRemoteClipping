@@ -1,3 +1,5 @@
+# im going to cry ive been doing nothing other than this project
+
 from obswebsocket import obsws, requests
 
 from flask import Flask, request, jsonify, send_file
@@ -17,7 +19,45 @@ DEVICEID = 0
 HASCONNECTION = False
 WS = None
 
+ISREC = False
+
 # OBSW
+
+@flask_app.route("/obsw/start")
+def enablereplay():
+    global ISREC
+    global WS
+
+    if not ISREC and WS:
+        WS.call(requests.SetReplayBufferDuration(replayBufferDuration=90))
+        WS.call(requests.StartReplayBuffer())
+
+        ISREC = True
+        return jsonify({"message":"Replay started"}), 200
+    return jsonify({"error":"Is already recording or has no websocket connection"}), 400
+
+@flask_app.route("/obsw/stop")
+def disablereplayreplay():
+    global ISREC
+    global WS
+
+    if ISREC and WS:
+        WS.call(requests.StopReplayBuffer())
+
+        ISREC = False
+        return jsonify({"message":"Replay stopped"}), 200
+    return jsonify({"error":"Is already recording or has no websocket connection"}), 400
+
+@flask_app.route("/obsw/save")
+def savereplayreplay():
+    global ISREC
+    global WS
+
+    if ISREC and WS:
+        WS.call(requests.SaveReplayBuffer())
+        return jsonify({"message":"Replay stopped"}), 200
+    return jsonify({"error":"Is already recording or has no websocket connection"}), 400
+
 
 # FUNCS
 
@@ -103,5 +143,8 @@ def sendscreenshot():
         return str(e), 500
 
 def run():
+    flask_app.run(debug=False, host="0.0.0.0", port=5000)
+
+if __name__ == "__main__":
     flask_app.run(debug=False, host="0.0.0.0", port=5000)
     
