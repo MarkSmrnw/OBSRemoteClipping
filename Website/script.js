@@ -73,7 +73,7 @@ async function showoverview() {
     try {
 
         const fetchjson = await fetch("http://127.0.0.1:5001/read")
-        const fetchrec = await fetch("http://127.0.0.1:5001/rec/read")
+        const fetchrec = await fetch("http://127.0.0.1:5001/obsw/read")
         const data = await fetchjson.json()
         const recdata = await fetchrec.json()
 
@@ -124,7 +124,7 @@ function dcbutton(id, obj) {
 async function startreplay() {
     try{
         fetchDevices = await fetch("http://127.0.0.1:5001/read")
-        fetchRecording = await fetch("http://127.0.0.1:5001/rec/read")
+        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/read")
 
         jsondevices = await fetchDevices.json()
         jsonrecording = await fetchRecording.json()
@@ -152,7 +152,7 @@ async function startreplay() {
 
                     jsonrecording['devices'] = newrec
 
-                    wriReq = await fetch("http://127.0.0.1:5001/rec/write", {
+                    wriReq = await fetch("http://127.0.0.1:5001/obsw/write", {
                         method:['POST'],
                         headers:{'Content-Type':'application/json'},
                         body:JSON.stringify(jsonrecording)
@@ -168,7 +168,7 @@ async function startreplay() {
 async function stopreplay() {
     try{
         fetchDevices = await fetch("http://127.0.0.1:5001/read")
-        fetchRecording = await fetch("http://127.0.0.1:5001/rec/read")
+        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/read")
 
         jsondevices = await fetchDevices.json()
         jsonrecording = await fetchRecording.json()
@@ -194,7 +194,7 @@ async function stopreplay() {
             }
             jsonrecording['devices'] = {}
 
-            wriReq = await fetch("http://127.0.0.1:5001/rec/write", {
+            wriReq = await fetch("http://127.0.0.1:5001/obsw/write", {
                 method:['POST'],
                 headers:{'Content-Type':'application/json'},
                 body:JSON.stringify(jsonrecording)
@@ -208,7 +208,7 @@ async function stopreplay() {
 async function savereplay() {
     try{
         fetchDevices = await fetch("http://127.0.0.1:5001/read")
-        fetchRecording = await fetch("http://127.0.0.1:5001/rec/read")
+        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/read")
 
         jsondevices = await fetchDevices.json()
         jsonrecording = await fetchRecording.json()
@@ -288,19 +288,16 @@ function setStatus(text, colorstr="normal") {
 }
 
 async function ping(ip) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2500);
-
     try {
-        const response = await fetch("http://" + ip + ":5000/ping", { signal: controller.signal });
-        clearTimeout(timeoutId);
-        return response.status;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            return "timeout";
-        }
-        return error.status || "error";
+        const response = await fetch("http://127.0.0.1:5001/ping", {
+            method:['POST'],
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({'ip':ip})
+        })
+
+        return response.status
+    } catch(error) {
+        return response.status
     }
 }
 
@@ -328,6 +325,8 @@ async function screenshot(containername, ip=connect_input.value) {
 }
 
 //CLI HANDLING
+
+sendCli('ping 172.29.230.79')
 
 async function sendCli(text) {
     const inputobj = document.getElementById("txtinput")
@@ -413,22 +412,21 @@ async function sendCli(text) {
     } else if (split[0].toLowerCase() == "ping") { // <<< PING
         if (split[1]) {
             setResponse("Sending 4 ping requests to " + split[1] + "...", "SET")
-            let successCount = 0
-            let failCount = 0
 
-            for (let i = 1; i <= 4; i++) {
-                let result = await ping(split[1])
+            let success
 
-                if (result == 200) {
-                    successCount++
-                    setResponse("Ping successful.", "ADD")
-                } else {
-                    failCount++
-                    setResponse("Ping error. " + result, "ADD")
-                }
+            let result = await ping(split[1])
+            setResponse("DONE", "ADD")
+
+            if (result == 200) {
+                success = true
+                setResponse("Ping successful.", "ADD")
+            } else {
+                success = false
+                setResponse("Ping error. " + result, "ADD")
             }
 
-            setResponse("Ping finished. " + successCount + " successful pings, " + failCount + " failed pings.", "ADD")
+            setResponse("E", "ADD")
 
         } else {
             response = 

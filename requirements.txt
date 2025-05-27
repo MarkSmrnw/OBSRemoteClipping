@@ -1,5 +1,6 @@
 obs-websocket-py
 flask
 flask_cors
+flask[async]
 mss
 pillow

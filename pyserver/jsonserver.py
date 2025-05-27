@@ -7,13 +7,29 @@ import json
 import os
 import threading
 
-path = os.getcwd() + "/pyserver/data/connections.json"
-recpath = os.getcwd() + "/pyserver/data/recording.json"
+import obswebsocket
+
+path = os.path.dirname(os.path.abspath(__file__)) + r"\data\connections.json"
+recpath = os.path.dirname(os.path.abspath(__file__)) + r"\data\recording.json"
 
 flask_app = Flask(__name__)
 CORS(flask_app)
 
-# Web server for serving HTML files
+##### OBSWS HANDLING #####
+
+connectionhash = {
+    # 'IPADDRESS' : THREADOBJ
+}
+
+@flask_app.route('/obsw/connect', methods=['POST'])
+def connectobs():
+    # TO DO:
+    # - SAVE CONNECTIONS IN THREADS
+    # - CONNECT VIA SERVER
+    # - REMOVE WEBSOCKET FOR WEBSOCKET :)
+
+    ...
+
 web_app = Flask(__name__, static_folder='../Website')
 CORS(web_app)
 
@@ -42,7 +58,7 @@ def writejson():
 
         return {"message":"JSON data dumped"}, 200
 
-@flask_app.route('/rec/read')
+@flask_app.route('/obsw/read')
 def readrec():
 
     with open(recpath, "r") as f:
@@ -50,7 +66,7 @@ def readrec():
 
     return jsonify(data)
 
-@flask_app.route('/rec/write', methods=['POST'])
+@flask_app.route('/obsw/write', methods=['POST'])
 def writerec():
     if request.is_json:
         data = request.get_json()
@@ -58,6 +74,20 @@ def writerec():
             json.dump(data, f, indent=4)
 
         return {"message":"JSON data dumped"}, 200
+
+@flask_app.route('/ping', methods=['POST'])
+async def ping():
+    if request.is_json:
+        
+        data = request.get_json()
+        if data['ip']:
+            response = os.system(f"ping {data['ip']}")
+            
+            if response == 0:
+                return {"message":response}, 200
+            else:
+                return {"error":response}, 400
+                
 
 def run():
     flask_app.run(debug=False, host="0.0.0.0", port=5001)
@@ -70,10 +100,8 @@ def run_web_server():
     web_app.run(debug=False, host="0.0.0.0", port=8080)
 
 if __name__ == "__main__":
-    # Start the JSON API server in a separate thread
     api_thread = threading.Thread(target=run)
     api_thread.daemon = True
     api_thread.start()
     
-    # Start the web server in the main thread
     run_web_server()

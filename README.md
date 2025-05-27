@@ -4,6 +4,9 @@ Authors:
 - [Mark](https://github.com/MarkSmrnw)
 - [Elias](https://github.com/TeelichtFoxy)
 
+# PLEASE NOTE,
+I only intended this to be used on windows systems.
+I might add linux soon, maybe... Idrk
 
 # HOW TO RUN:
 
