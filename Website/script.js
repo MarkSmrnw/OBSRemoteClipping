@@ -15,14 +15,17 @@ const overviewdiv = document.getElementById('overviewwrapper')
 const greeting = document.getElementById('greeting')
 
 let activeview = false
-let replaystatus = false
-let activeDevices = 0
+let screenshotInterval
 
 
 function showcommands(){
+    activeview = false
 
     if (document.getElementById('firsttimegreeting')) {
         document.getElementById('firsttimegreeting').remove()
+    }
+    if (screenshotInterval) {
+        clearInterval(screenshotInterval)
     }
 
     activeview = false
@@ -47,6 +50,7 @@ function showcommands(){
         </div>`
 }
 
+
 async function showoverview() {
 
     setStatus("Device overview.")
@@ -68,54 +72,74 @@ async function showoverview() {
     overviewdiv.innerHTML = `<div class="row justify-content-center">
         <button class="clippingbuttons" id="startreplaybutton" onclick="startreplay()">Start replaybuffer</button>
         <button class="clippingbuttons" id="startreplaybutton" onclick="stopreplay()">Stop replaybuffer</button>
-        <button class="clippingbuttons" id="savereplaybutton" onclick="savereplay()">Save clip</button></div>`
+        <button class="clippingbuttons" id="savereplaybutton" onclick="savereplay()">Save clip</button></div>
+        <div id="screenwrapper"></div>`
 
     try {
+        const response1 = await fetch("http://127.0.0.1:5001/obsw/readcon")
+        const response2 = await fetch("http://127.0.0.1:5001/obsw/readrec")
 
-        const fetchjson = await fetch("http://127.0.0.1:5001/read")
-        const fetchrec = await fetch("http://127.0.0.1:5001/obsw/read")
-        const data = await fetchjson.json()
-        const recdata = await fetchrec.json()
+        const screenwrapper = document.getElementById('screenwrapper')
 
-        let i = 1
-        let avalible = {}
+        if (response1.ok && response2.ok) {
+            const condata = await response1.json()
+            const recdata = await response2.json()
 
-        if (data && fetchjson.ok) {
-            for (var key in data['devices']) {
-                const response = await ping(data['devices'][key.toString()])
+            for (var key in condata) {
+                await makeimg(condata[key])
+            }
 
-                if (response == 200) {
-                    avalible[i.toString()] = data['devices'][key.toString()]
-
-                    await makeimg(key)
-                    await screenshot("pcimg" + key, data['devices'][key.toString()])
-
-                    for (var key2 in recdata['devices']) {
-                        if (data['devices'][key.toString()] == recdata['devices'][key2.toString()]) {
-                            parent = document.getElementById('pcimg' + key)
-                            parent.style = parent.style = "border: 5px solid red;"
-                        }
+            for (let i = 0; i < screenwrapper.children.length; i++) {
+                for (let ii = 0; ii < screenwrapper.children[i].children.length; ii++) {
+                    let element = screenwrapper.children[i].children[ii]
+                    let ip = element.querySelector('.computerid').innerText
+                    
+                    await screenshot(element, ip)
+                    found = false
+                    console.log(recdata)
+                    for (var key in recdata) {
+                        if (recdata[key] == ip) {found=true}
                     }
-
-                    i++
+                    if (found) {element.style = "border: 2px solid red;"}
+                    else {element.style = " "}
                 }
             }
 
-            data['devices'] = avalible
+        screenshotInterval = setInterval(async () => {
+        if (activeview) {
+            const screenwrapper = document.getElementById('screenwrapper')
+            const response = await fetch("http://127.0.0.1:5001/obsw/readrec")
 
-            await fetch("http://127.0.0.1:5001/write", {
-                method:['POST'],
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(data)
-            })
+            if (response.ok) {
+                const recdata = await response.json()
+                for (let i = 0; i < screenwrapper.children.length; i++) {
+                    for (let ii = 0; ii < screenwrapper.children[i].children.length; ii++) {
+                        let element = screenwrapper.children[i].children[ii]
+                        let ip = element.querySelector('.computerid').innerText
+                        await screenshot(element, ip)
+
+                        found = false
+                        for (var key in recdata) {
+                            if (recdata[key] == ip) {found=true}
+                        }
+                        if (found) {element.style = "border: 2px solid red;"}
+                        else {element.style = " "}
+                    }
+                }
+            }
+            
         }
-    } catch (error) {
+    }, 1000) // MAKE INTERVAL VARBAIBLE VIA SETTINGS
+        }
+    } catch(error) {
         setStatus(error, "error")
     }
+
 }
 
-function dcbutton(id, obj) {
-    sendCli("dc -id "+ id)
+function dcbutton(ip, obj) {
+    console.log("DC TRIGGER")
+    sendCli("dc "+ ip)
     obj.parentElement.remove()
 }
 
@@ -123,43 +147,34 @@ function dcbutton(id, obj) {
 
 async function startreplay() {
     try{
-        fetchDevices = await fetch("http://127.0.0.1:5001/read")
-        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/read")
+        fetchDevices = await fetch("http://127.0.0.1:5001/obsw/readcon")
+        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/readrec")
 
-        jsondevices = await fetchDevices.json()
-        jsonrecording = await fetchRecording.json()
+        condata = await fetchDevices.json()
+        recdata = await fetchRecording.json()
 
-        newrec = {}
-        let i = 1
-
-        if (jsondevices && jsonrecording) {
-            for (var key in jsondevices['devices']) {
-
-                let found = false
-                for (var key2 in jsonrecording['devices']) {
-                    if (jsonrecording['devices'][key2.toString()] == jsondevices['devices'][key.toString()]) {
-                        found = true
-                    }
+        if (condata && recdata) {
+            for (var key in condata) {
+                found = false
+                for (var key2 in recdata) {
+                    if (recdata[key2] == condata[key]) {found = true} 
                 }
 
-                if (found == false) {
-                    recReq = await fetch("http://"+jsondevices['devices'][key.toString()]+":5000/obsw/start")
-                    newrec[i.toString()] = jsondevices['devices'][key.toString()]
-                    parent = document.getElementById("pcimg" + key)
-                    parent.style = "border: 5px solid red;"
-
-                    i++
-
-                    jsonrecording['devices'] = newrec
-
-                    wriReq = await fetch("http://127.0.0.1:5001/obsw/write", {
+                if (!found) {
+                    const response = await fetch("http://127.0.0.1:5001/obsw/startrec", {
                         method:['POST'],
                         headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify(jsonrecording)
+                        body:JSON.stringify({'ip':condata[key]})
                     })
+                    if (response.status == 200){
+                        setStatus("Recording started")
+                    } else {
+                        setStatus("Recording start did not return 200")
+                    }
                 }
             }
         }
+
     } catch (error) {
         setStatus(error, "error")
     }
@@ -167,113 +182,102 @@ async function startreplay() {
 
 async function stopreplay() {
     try{
-        fetchDevices = await fetch("http://127.0.0.1:5001/read")
-        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/read")
+        fetchDevices = await fetch("http://127.0.0.1:5001/obsw/readcon")
+        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/readrec")
 
-        jsondevices = await fetchDevices.json()
-        jsonrecording = await fetchRecording.json()
+        condata = await fetchDevices.json()
+        recdata = await fetchRecording.json()
 
-        newrec = {}
-
-        if (jsondevices && jsonrecording) {
-            for (var key in jsondevices['devices']) {
-
-                let found = false
-                for (var key2 in jsonrecording['devices']) {
-                    if (jsonrecording['devices'][key2.toString()] == jsondevices['devices'][key.toString()]) {
-                        found = true
-                    }
+        if (condata && recdata) {
+            for (var key in condata) {
+                found = false
+                for (var key2 in recdata) {
+                    if (recdata[key2] == condata[key]) {
+                        const response = await fetch("http://127.0.0.1:5001/obsw/stoprec", {
+                            method:['POST'],
+                            headers:{'Content-Type':'application/json'},
+                            body:JSON.stringify({'ip':condata[key]})
+                        })
+                        if (response.status == 200){
+                            setStatus("Recording stopped")
+                        } else {
+                            setStatus("Recording stop did not return 200")
+                        }
+                    } 
                 }
 
-                if (found == true) {
-                    recReq = await fetch("http://"+jsondevices['devices'][key.toString()]+":5000/obsw/stop")
+                if (!found) {
                     
-                    parent = document.getElementById("pcimg" + key)
-                    parent.style = ""
                 }
             }
-            jsonrecording['devices'] = {}
-
-            wriReq = await fetch("http://127.0.0.1:5001/obsw/write", {
-                method:['POST'],
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(jsonrecording)
-            })
         }
+
     } catch (error) {
         setStatus(error, "error")
     }
 }
 
 async function savereplay() {
-    try{
-        fetchDevices = await fetch("http://127.0.0.1:5001/read")
-        fetchRecording = await fetch("http://127.0.0.1:5001/obsw/read")
+        try {
+            fetchRecording = await fetch("http://127.0.0.1:5001/obsw/readrec")
+            recdata = await fetchRecording.json()
 
-        jsondevices = await fetchDevices.json()
-        jsonrecording = await fetchRecording.json()
-
-        newrec = {}
-
-        if (jsondevices && jsonrecording) {
-            for (var key in jsondevices['devices']) {
-
-                let found = false
-                for (var key2 in jsonrecording['devices']) {
-                    if (jsonrecording['devices'][key2.toString()] == jsondevices['devices'][key.toString()]) {
-                        found = true
+            if (recdata) {
+                for (var key in recdata) {
+                    const response = await fetch("http://127.0.0.1:5001/obsw/saverec", {
+                        method: ['POST'],
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({'ip': recdata[key]})
+                    })
+                    
+                    if (response.status == 200) {
+                        setStatus("Clip saved successfully", "success")
+                    } else {
+                        setStatus("Failed to save clip", "error")
                     }
                 }
-
-                if (found == true) {
-                    recReq = await fetch("http://"+jsondevices['devices'][key.toString()]+":5000/obsw/save")
-                }
+            } else {
+                setStatus("No active recordings found", "error")
             }
+        } catch (error) {
+            setStatus(error, "error")
         }
-    } catch (error) {
-        setStatus(error, "error")
     }
-}
 
 // FETCH CMS
 
-async function makeimg(id) {
-    const wrapper = overviewdiv
-    let found = false
-    for (const child of wrapper.children) {
-        if (child.children.length < 2) {
-            found = true
-            if (activeview == false) {return}
-            child.innerHTML += `<div class="upperimgdiv col-md-5">
-                <span class="computerid" id="pcid` + id + `">[COMPUTERID]</span>
-                <div class="disconnectbutton" onclick="dcbutton(`+ id +`, this)">DISCONNECT</div>
-                <div class="pccover"></div>
-                <img class="innerimg" id="pcimg` + id + `" src="">
-                </div>`
+async function makeimg(ip) {
+    partialTag = `
+<div class="upperimgdiv col-md-5">
+    <span class="computerid">${ip}</span>
+    <div class="disconnectbutton" onclick='dcbutton("` + ip + `", this)'>DISCONNECT</div>
+    <div class="pccover"></div>
+    <img class="innerimg" style="background-color:black;">
+</div>`
 
-            
-            if (activeview == false) {return}
-            const pcid = document.getElementById("pcid" + id)
-            pcid.innerText = id
+    fullTag = `
+<div class="row justify-content-center">
+    <div class="upperimgdiv col-md-5">
+        <span class="computerid">${ip}</span>
+        <div class="disconnectbutton"onclick='dcbutton("` + ip + `", this)'>DISCONNECT</div>
+        <div class="pccover"></div>
+        <img class="innerimg" style="background-color:black;">
+    </div>
+</div>`
+
+    const wrapper = document.getElementById('screenwrapper')
+    var foundobj
+    
+    if (wrapper.children) {
+        for (let i = 0; i < wrapper.children.length; i++) {
+            if (wrapper.children[i].children.length < 2) {
+                foundobj = wrapper.children[i]
+            }
         }
     }
 
-    if (!found) {
-        if (activeview == false) {return}
-        wrapper.innerHTML += 
-        `<div class="row justify-content-center">
-            <div class="upperimgdiv col-md-5">
-                <span class="computerid" id="pcid` + id + `">[COMPUTERID]</span>
-                <div class="disconnectbutton" onclick="dcbutton(`+ id +`, this)">DISCONNECT</div>
-                <div class="pccover"></div>
-                <img class="innerimg" id="pcimg` + id + `" src="">
-            </div>
-        </div>
-        `
-        if (activeview == false) {return}
-        const newelement = document.getElementById("pcid" + id)
-        newelement.innerText = id
-    }
+    if (foundobj) {foundobj.innerHTML += partialTag
+    } else {wrapper.innerHTML += fullTag}
 }
 
 function setStatus(text, colorstr="normal") {
@@ -301,40 +305,43 @@ async function ping(ip) {
     }
 }
 
-async function screenshot(containername, ip=connect_input.value) {
-
-    const imgHtml = document.getElementById(containername)
+async function screenshot(container, ip) {
 
     try{
-        if (activeview == false) {return}
-        const response = await fetch("http://" + ip + ":5000/screenshot")
-        if (activeview == false) {return}        if (!response.ok) {
-            throw new Error(response.status, response.statusText)
-        } else {
-            const imgBlob = await response.blob()
-            const imgUrl = URL.createObjectURL(imgBlob)
-            if (imgHtml.src && imgHtml.src.startsWith('blob:')) {
-                URL.revokeObjectURL(imgHtml.src)
-            }
+        if (activeview) {
+            const response = await fetch("http://127.0.0.1:5001/obsw/screen", {
+                method: ['POST'],
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({'ip':ip})
+            })
 
-            imgHtml.src = imgUrl
-        }
-    } catch (error) {
-         setStatus(error, "error")
+            if (response.ok) {
+                const data = await response.json()
+                const imgdata = data.imageData
+                const imgelement = container.querySelector('.innerimg')
+
+                if (imgelement) {
+                    if (imgdata.startsWith('data')) {
+                        imgelement.src = imgdata
+                    } else {
+                        imgelement.src = `data:image/webp;base64,${imgdata}`
+                    }
+                }
+            }
+        } else {return}
+    } catch(error) {
+        setStatus(error, "error")
     }
 }
 
 //CLI HANDLING
 
-sendCli('ping 172.29.230.79')
-
 async function sendCli(text) {
     const inputobj = document.getElementById("txtinput")
     let inputval
 
-    if (text != undefined) {
-        inputval = text
-    } else {inputval = inputobj.value}
+    if (text != undefined) {inputval = text
+    } else {inputval = inputobj.value; inputobj.value = ""}
 
     let split = String(inputval).split(" ")
 
@@ -345,63 +352,38 @@ async function sendCli(text) {
 `Help has arrived! List of avalible commands:
   PING [IP]
   CONNECT [IP]
-  DISCONNECT -ip [IP] || -id [ID]`
+  DISCONNECT -ip [IP]`
 
     setResponse(response, "SET")
     } else if (split[0].toLowerCase() == "connect" || split[0].toLowerCase() == "c") {   // <<< CONNECT
         if (split[1]) {
-            setResponse("Attempting to communicate with " + split[1] + "...", "SET")
-            let result = await ping(split[1])
-            setResponse(result, "ADD")
+            setResponse("Attempting communication with " + split[1] + "..", "SET")
+            response = await fetch("http://127.0.0.1:5001/ping", {
+                method:['POST'],
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({'ip':split[1]})
+            })
 
-            if (result == 200) {
-                setResponse("result OK", "ADD")
-                setResponse("Connecting...", "ADD")
+            if (response.ok) {
+                setResponse("Communication attempt success.", "ADD")
+                setResponse("Connecting with OBS Websocket..", "ADD")
 
-                try {   // CONNECTION INIT
-                    const response = await fetch("http://" + split[1] + ":5000/connect", {
-                        method: "POST",
-                        headers: {'Content-Type': "application/json"},
-                        body: JSON.stringify({ deviceId : 1337 })
-                    })
+                response = await fetch("http://127.0.0.1:5001/obsw/connect", {
+                    method:['POST'],
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({'ip':split[1]})
+                })
 
-                    if (response.ok) {  
-                        setResponse("Result OK! We are connected! Applying changes to JSON", "ADD")
-                        setResponse("Requesting JSON", "ADD")
-
-                        try{ // JSON INIT
-                            const r1 = await fetch("http://127.0.0.1:5001/read")
-                            const r1d = await r1.json()
-
-                            let newId = 1;
-                            while (r1d.devices && r1d.devices[newId]) newId++;
-                            if (!r1d.devices) r1d.devices = {};
-                            r1d.devices[newId] = split[1];
-
-                            const r2 = await fetch("http://127.0.0.1:5001/write", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(r1d)
-                            })
-
-                            if (r2.ok) {
-                                setResponse("Finished. Connected to " + split[1], "ADD")
-                                activeDevices++
-                            }
-                        } catch (error) {
-                            setResponse(error + " - ABORTED JSON UPDATE", "ADD")
-                        }
-                    } else {
-                        setResponse("NOT ok: " + response.status + " - ABORTED CONNECTION INIT", "ADD")
-                        if (response.status == 403) {
-                            setResponse("403 usually means you are already connected.", "ADD")
-                        }
-                    }
-                } catch (error) {
-                    setResponse(error + " - ABORTED CONNECTION INIT", "ADD")
+                if (response.status == 200) {
+                    setResponse("Connected with OBS Websocket.", "ADD")
+                } else {
+                    setResponse("Connection attempt failed.", "ADD")
+                    setResponse("Is your OBS websocket enabled?", "ADD")
                 }
 
-            } else {setResponse("Result not OK. Abort", "ADD")}
+            } else {
+                setResponse("Communication attempt failed.", "ADD")
+            }
         } else {
             response = 
 `CONNECT: First argument is missing.
@@ -411,22 +393,14 @@ async function sendCli(text) {
         }
     } else if (split[0].toLowerCase() == "ping") { // <<< PING
         if (split[1]) {
-            setResponse("Sending 4 ping requests to " + split[1] + "...", "SET")
-
-            let success
-
-            let result = await ping(split[1])
-            setResponse("DONE", "ADD")
-
+            setResponse("Pinging " + split[1] + "...", "SET")
+            
+            result = await ping(split[1])
             if (result == 200) {
-                success = true
                 setResponse("Ping successful.", "ADD")
             } else {
-                success = false
                 setResponse("Ping error. " + result, "ADD")
             }
-
-            setResponse("E", "ADD")
 
         } else {
             response = 
@@ -436,107 +410,37 @@ async function sendCli(text) {
             setResponse(response, "SET")
         }
     } else if (split[0].toLowerCase() == "disconnect" || split[0].toLowerCase() == "dc") { // <<< DISCONNECT
-        if (split[1] && split[2]) {
-            setResponse("Disconnecting with mode " + split[1] + " from " + split[2], "SET")
-            setResponse("Fetching JSON", "ADD")
+        if (split[1]) {
+            setResponse("Attempting communication with " + split[1] + "..", "SET")
+            response = await fetch("http://127.0.0.1:5001/ping", {
+                method:['POST'],
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({'ip':split[1]})
+            })
 
-            let jsondata
+            if (response.ok) {
+                setResponse("Communication attempt success.", "ADD")
+                setResponse("Disconnecting with OBS Websocket..", "ADD")
 
-            try{
-                const response = await fetch("http://127.0.0.1:5001/read")
-                const data = await response.json()
+                response = await fetch("http://127.0.0.1:5001/obsw/disconnect", {
+                    method:['POST'],
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({'ip':split[1]})
+                })
 
-                if (data && response.ok) {
-                    jsondata = data
+                if (response.status == 200) {
+                    setResponse("Disconnected OBS Websocket.", "ADD")
+                } else {
+                    setResponse("Disconnect failed.", "ADD")
                 }
-            } catch (error) {
-                setResponse("JSON Fetch returned an exception: " + error, "ADD")
+
+            } else {
+                setResponse("Communication attempt failed.", "ADD")
             }
-
-            if (split[1].toLowerCase() == "-ip" || split[1].toLowerCase() == "ip" || 
-                split[1].toLowerCase() == "-id" || split[1].toLowerCase() == "id") {
-
-                let foundIP = undefined
-                let foundKEY = undefined
-
-                if (split[1].toLowerCase() == "-ip" || split[1].toLowerCase() == "ip") {
-                    for (var key in jsondata['devices']) {
-                        if (jsondata['devices'][key.toString()] == split[2]) {
-                            foundIP = jsondata['devices'][key.toString()]
-                            foundKEY = key
-                        }
-                    }
-                } else {
-                    if (jsondata['devices'][split[2]]){
-                        foundKEY = split[2]
-                        foundIP = jsondata['devices'][foundKEY]
-                    }
-                }
-
-                if (foundIP != undefined && foundKEY != undefined) {
-                    setResponse("Found entry. IP: " + foundIP + "; KEY: " + foundKEY, "ADD")
-                    
-                    let newDevices = {}
-                    let idx = 1;
-                    for (var key in jsondata['devices']) {
-                        if (key != foundKEY) {
-                            newDevices[idx.toString()] = jsondata['devices'][key];
-                            idx++;
-                        }
-                    }
-                    setResponse("Finally disconnecting...", "ADD")
-
-                    try{
-                        const response = await fetch("http://" + foundIP + ":5000/disconnect")
-                        activeDevices--
-
-                        if (response.ok) {
-                            setResponse("DC OK!", "ADD")
-                        } else {
-                            setResponse("DC NOT OK! CONTINUING. Device is linked but has no OBSW.", "ADD")
-                            setResponse("WE MUST REMOVE THIS ANOMALY FROM THE JSON IMEDIATLY!!!!!!!!!!!!!!!", "ADD")
-                        }
-                    } catch (error) {
-                        setResponse("Disconnect returned exception: " + error, "ADD")
-                        return
-                    }
-
-                    setResponse("Updating JSON...", "ADD")
-
-                    try {
-                        jsondata['devices'] = newDevices
-
-                        const response = await fetch("http://127.0.0.1:5001/write", {
-                            method:'POST',
-                            headers:{'Content-Type':'application/json'},
-                            body:JSON.stringify(jsondata)
-                        })
-
-                        if (response.ok) {
-                            setResponse("JSON Updated.", "ADD")
-                        } else {
-                            setResponse("JSON Update NOT OK! ABORT", "ADD")
-                            setResponse("This is bad.. You have to restart the clients script for disconnect to work again.", "ADD")
-                            return
-                        }
-
-                        setResponse("Successfully disconnected from " + foundIP, "ADD")
-                        
-                        
-                    } catch (error) {
-                        setResponse("JSON POST retured exception: " + error, "ADD")
-                        return
-                    }
-
-                } else {
-                    setResponse("IP / ID could not be found within the connected devices.", "ADD")
-                }
-
-            } else {console.log("NA")}
         } else {
             response = 
 `DISCONNECT: Arguments are missing.
-  DISCONNECT -ip [IP] || -id [ID]`
+  DISCONNECT -ip [IP]`
             
             setResponse(response, "SET")
         }
@@ -658,47 +562,3 @@ async function sendCli(text) {
         } else {setStatus(response)}
     }
 }
-
-// IMG UPDATE
-
-async function updateImages() {
-    if (activeview == false) {
-        return
-    }
-    try {
-
-        const fetchjson = await fetch("http://127.0.0.1:5001/read")
-        const data = await fetchjson.json()
-
-        let i = 1
-        let avalible = {}
-
-        if (data && fetchjson.ok) {
-            for (var key in data['devices']) {
-                const response = await ping(data['devices'][key.toString()])
-
-                if (response == 200) {
-                    avalible[i.toString()] = data['devices'][key.toString()]
-                    await screenshot("pcimg" + key, data['devices'][key.toString()])
-                    i++
-                } else {
-                    activeDevices--
-                    document.getElementById("pcid" + key).parentElement.remove()
-                }
-                
-            }
-
-            data['devices'] = avalible
-
-            await fetch("http://127.0.0.1:5001/write", {
-                method:['POST'],
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(data)
-            })
-        }
-    } catch (error) {
-        setStatus(error, "error")
-    }
-}
-
-setInterval(updateImages, 10000) // Make this be variable via settings
