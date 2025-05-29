@@ -1,1 +1,0 @@
-start %CD%/pyserver/client.py
