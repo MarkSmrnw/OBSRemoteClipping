@@ -96,7 +96,6 @@ async function showoverview() {
                     
                     await screenshot(element, ip)
                     found = false
-                    console.log(recdata)
                     for (var key in recdata) {
                         if (recdata[key] == ip) {found=true}
                     }
@@ -116,14 +115,22 @@ async function showoverview() {
                     for (let ii = 0; ii < screenwrapper.children[i].children.length; ii++) {
                         let element = screenwrapper.children[i].children[ii]
                         let ip = element.querySelector('.computerid').innerText
-                        await screenshot(element, ip)
+                        const response = await ping(ip)
 
-                        found = false
-                        for (var key in recdata) {
-                            if (recdata[key] == ip) {found=true}
+                        if (response == 200) {
+                            await screenshot(element, ip)
+
+                            found = false
+                            for (var key in recdata) {
+                                if (recdata[key] == ip) {found=true}
+                            }
+                            if (found) {element.style = "border: 2px solid red;"}
+                            else {element.style = " "}
+                        } else {
+                            setStatus("Could not reach " + ip, "error")
                         }
-                        if (found) {element.style = "border: 2px solid red;"}
-                        else {element.style = " "}
+
+                        
                     }
                 }
             }
